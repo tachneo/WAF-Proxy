@@ -1,7 +1,9 @@
 <?php
 
-// Start a session to track the audit checklist
-session_start();
+// Check if a session is already active before starting one
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 
 // Initialize audit checklist if not set
 if (!isset($_SESSION['audit_checklist'])) {
@@ -12,23 +14,24 @@ if (!isset($_SESSION['audit_checklist'])) {
     ];
 }
 
-// Define attack patterns for SQLi, XSS, CSRF, etc.
+// Define attack patterns for SQLi, XSS, CSRF, RFI, etc.
 $attack_patterns = [
     'SQL_INJECTION' => '/(union.*select.*|select.*from.*|insert.*into.*|drop.*table.*)/i',
-    'XSS' => '/(<.*script.*>|javascript:.*)/i',
+    'XSS' => '/(<.*script.*>|javascript:.*|onload=.*|onerror=.*)/i',
     'CSRF' => '/(csrf_token|_csrf)/i',
-    'RFI_LFI' => '/(file:\/\/|php:\/\/|data:\/\/)/i',
-    'HTTP_RESPONSE_SPLIT' => '/(\%0d\%0a|\r\n)/i'
+    'RFI_LFI' => '/(file:\/\/|php:\/\/|data:\/\/|base64)/i',
+    'HTTP_RESPONSE_SPLIT' => '/(\%0d\%0a|\r\n)/i',
+    'CMD_INJECTION' => '/(;|&&|\|\||`|<|>|\\$)/' // Protect against shell commands
 ];
 
-// Brute force protection
+// Brute force protection: Limit login attempts per IP
 function limit_login_attempts($ip) {
     if (!isset($_SESSION['login_attempts'][$ip])) {
         $_SESSION['login_attempts'][$ip] = 0;
     }
     $_SESSION['login_attempts'][$ip]++;
+    
     if ($_SESSION['login_attempts'][$ip] > 5) {
-        // Block further attempts and log this event
         log_request($ip, 'Login Attempt Limit Exceeded', 'POST', 'Too many login attempts');
         header('HTTP/1.1 429 Too Many Requests');
         echo json_encode(["message" => "Too many login attempts. Try again later."]);
@@ -36,7 +39,7 @@ function limit_login_attempts($ip) {
     }
 }
 
-// Rate limiting to prevent DDoS or high request frequency
+// Rate limiting: Prevent DDoS and high request frequency
 function rate_limiting($ip) {
     if (!isset($_SESSION['rate_limit'][$ip])) {
         $_SESSION['rate_limit'][$ip] = ['count' => 0, 'last_time' => time()];
@@ -47,7 +50,6 @@ function rate_limiting($ip) {
     $time_difference = $current_time - $_SESSION['rate_limit'][$ip]['last_time'];
 
     if ($time_difference < 1 && $_SESSION['rate_limit'][$ip]['count'] > 10) {
-        // Block requests for a short period to prevent overloading the server
         log_request($ip, 'Rate Limiting Exceeded', $_SERVER['REQUEST_METHOD'], 'Too many requests in a short time');
         header('HTTP/1.1 429 Too Many Requests');
         echo json_encode(["message" => "Rate limit exceeded. Try again later."]);
@@ -79,26 +81,43 @@ function validate_file_upload($file) {
     }
 }
 
-// Input sanitization to remove potentially dangerous input
+// Input sanitization: Remove potentially dangerous input
 function sanitize_input($input) {
     return htmlspecialchars(strip_tags($input));
 }
 
-// Header injection protection: Protect against malicious headers
+// Header injection protection: Validate common headers for potential attacks
 function validate_headers($headers) {
     $header_patterns = [
-        'Host' => '/[^a-zA-Z0-9\.\-]/',
-        'Referer' => '/[^a-zA-Z0-9\.\-\:\/]/',
-        'User-Agent' => '/[^a-zA-Z0-9\.\-\(\) ]/'
+        'Host' => '/[^a-zA-Z0-9\.\-]/',           // Allow only alphanumeric, dots, and hyphens in the Host header
+        'Referer' => '/[^a-zA-Z0-9\.\-\:\/]/',    // Allow only alphanumeric, dots, hyphens, colons, and slashes in the Referer header
+        // Updated regex to allow additional characters in the User-Agent header
+        'User-Agent' => '/[^a-zA-Z0-9\.\-\(\)\/;:_ ]/' // Allow alphanumeric, dots, hyphens, parentheses, slashes, semicolons, colons, underscores, and spaces
     ];
 
     foreach ($header_patterns as $header => $pattern) {
         if (isset($headers[$header]) && preg_match($pattern, $headers[$header])) {
-            log_request($_SERVER['REMOTE_ADDR'], 'Header Injection', 'HEADER', $headers[$header]);
+            // Log the specific header causing the issue
+            log_request($_SERVER['REMOTE_ADDR'], 'Header Injection', 'HEADER', [$header => $headers[$header]]);
             header('HTTP/1.1 400 Bad Request');
-            echo json_encode(["message" => "Malicious header detected."]);
+            echo json_encode(["message" => "Malicious header detected in $header: " . $headers[$header]]);
             exit;
         }
+    }
+}
+
+
+
+
+// Protect against HTTP method tampering: Allow only specific HTTP methods
+function validate_http_method($method) {
+    $allowed_methods = ['GET', 'POST'];
+    
+    if (!in_array($method, $allowed_methods)) {
+        log_request($_SERVER['REMOTE_ADDR'], 'Invalid HTTP Method', $method, 'Invalid method used');
+        header('HTTP/1.1 405 Method Not Allowed');
+        echo json_encode(["message" => "HTTP method not allowed."]);
+        exit;
     }
 }
 
@@ -106,15 +125,15 @@ function validate_headers($headers) {
 function log_request($ip, $endpoint, $method, $payload, $attack_type = 'Unknown') {
     $log_entry = date('Y-m-d H:i:s') . " - Attack Detected: $attack_type | IP: $ip | Endpoint: $endpoint | Method: $method | Payload: " . json_encode($payload) . "\n";
     file_put_contents('waf_audit.log', $log_entry, FILE_APPEND);
-
+    
     $_SESSION['audit_checklist']['malicious_requests'] += 1;
 }
 
-// Audit log for green check - approved requests
+// Log approved requests
 function log_audit($ip, $endpoint, $method, $status) {
     $log_entry = date('Y-m-d H:i:s') . " - Audit Passed: IP: $ip | Endpoint: $endpoint | Method: $method | Status: $status\n";
     file_put_contents('waf_audit.log', $log_entry, FILE_APPEND);
-
+    
     $_SESSION['audit_checklist']['approved_requests'] += 1;
 }
 
@@ -144,6 +163,9 @@ function inspect_request() {
 
     // Combine GET, POST, and headers data for inspection
     $payload = array_merge($_GET, $_POST, $sanitized_headers);
+
+    // Validate HTTP method
+    validate_http_method($_SERVER['REQUEST_METHOD']);
 
     // Check for malicious patterns
     $attack_type = waf_rules($payload);
@@ -175,7 +197,6 @@ if ($_FILES) {
 
 // Call the inspect request function for every request
 inspect_request();
-
 ?>
 
 <!DOCTYPE html>
