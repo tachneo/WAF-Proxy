@@ -163,4 +163,14 @@ The **Export Logs** feature allows you to download the WAF logs for offline anal
 
 ---
 
+## Contact Information
+
+For any inquiries or support, feel free to reach out through the following channels:
+
+- 📧 [info@tach.in](mailto:info@tach.in)
+- 🔗 [LinkedIn Profile](https://www.linkedin.com/in/tachy/)
+
+---
+
+
 By following this manual, you’ll be able to efficiently manage your WAF through the GUI, enhancing the security of your web application.
