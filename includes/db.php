@@ -1,8 +1,8 @@
 <?php
 $host = 'localhost';
 $dbname = 'waf_management';
-$username = 'rohit';
-$password = 'Rohit@1eb357';
+$username = 't';
+$password = '7';
 
 $conn = new mysqli($host, $username, $password, $dbname);
 
