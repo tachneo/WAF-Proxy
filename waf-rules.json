@@ -1,0 +1,72 @@
+[
+    {
+        "id": "15",
+        "rule_name": "SQL Injection",
+        "pattern": "\/(select|insert|delete|drop|update)\/i",
+        "action": "block",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "16",
+        "rule_name": "Cross-Site Scripting (XSS)",
+        "pattern": "\/<script.*?>.*?<\/script>\/i",
+        "action": "block",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "17",
+        "rule_name": "Remote File Inclusion (RFI)",
+        "pattern": "\/(file:\/\/|http:\/\/|https:\/\/|php:\/\/)\/i",
+        "action": "block",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "18",
+        "rule_name": "Command Injection",
+        "pattern": "\/(;|&&||||&)\/i",
+        "action": "block",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "19",
+        "rule_name": "Local File Inclusion (LFI)",
+        "pattern": "\/(..\/|..\\\\|php:\/\/input|data:\/\/)\/i",
+        "action": "block",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "20",
+        "rule_name": "Sensitive Data Exposure",
+        "pattern": "\/(password|ssn|credit_card|api_key)\/i",
+        "action": "log",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "21",
+        "rule_name": "Rate Limiting",
+        "pattern": "\/^\/i",
+        "action": "log",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "22",
+        "rule_name": "User-Agent Logging",
+        "pattern": "\/Mozilla\/[0-9]+.[0-9]+\/",
+        "action": "log",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "23",
+        "rule_name": "Suspicious POST Requests",
+        "pattern": "\/Content-Length: [0-9]+\/",
+        "action": "log",
+        "created_at": "2024-09-09 00:25:27"
+    },
+    {
+        "id": "24",
+        "rule_name": "Sensitive File Access Logging",
+        "pattern": "\/(.env|.htaccess|config.php)\/i",
+        "action": "log",
+        "created_at": "2024-09-09 00:25:27"
+    }
+]
