@@ -1,113 +1,105 @@
-# WAF-Proxy
-WAF Proxy Using Flask and ModSecurity
-# PHP Web Application Firewall (WAF)
-
-This project is a lightweight **PHP-based Web Application Firewall (WAF)** designed to inspect incoming HTTP requests for malicious patterns such as SQL injection, XSS, CSRF, and other web-based attacks. It logs all suspicious requests and provides an audit mechanism for tracking blocked and approved requests.
-
-## Features
-
-1. **Real-Time Request Inspection**:
-   - Inspects incoming HTTP requests (GET, POST, and headers) and detects common attacks.
-   - Blocks malicious requests with a **403 Forbidden** response.
-
-2. **Attack Detection**:
-   - Protects against:
-     - **SQL Injection (SQLi)**
-     - **Cross-Site Scripting (XSS)**
-     - **Cross-Site Request Forgery (CSRF)**
-     - **Remote File Inclusion (RFI)**
-     - **Local File Inclusion (LFI)**
-   - Uses regular expressions to detect attack patterns.
-
-3. **Logging**:
-   - Logs all malicious and approved requests to a log file `waf_audit.log`.
-   - Provides a detailed log of IP addresses, attack types, request URIs, and methods.
-
-4. **Audit Checklist**:
-   - Tracks the number of requests inspected, malicious requests detected, and approved (safe) requests.
-   - Audit information is available in JSON format via a dedicated endpoint.
-
-5. **Endpoints**:
-   - `/audit`: Returns a summary of inspected requests, malicious requests, and approved requests.
-   - `/audit/logs`: Allows downloading the audit logs.
-   - `/audit/export`: Exports the audit data in JSON format.
-
-## Installation
-
-### Prerequisites
-
-- **PHP 7.x or higher** must be installed on your server.
-- Ensure the web server has write permissions to create and update the `waf_audit.log` file.
-
-### Steps to Deploy
-
-1. **Clone the Repository**:
-   ```bash
-   git clone https://github.com/yourusername/php-waf.git
-   cd php-waf
-
-Deploy the WAF:
-
-Place the index.php file in the root directory of your PHP web server.
-The WAF will automatically inspect all incoming requests.
-Verify the Setup:
-
-Visit the application homepage (e.g., http://yourdomain.com/) to ensure the WAF is functioning.
-
-Usage
-Once deployed, the WAF will begin inspecting incoming requests and logging suspicious activity. You can test attacks and view the audit reports as follows:
-
-Test SQL Injection Attack
-You can simulate an SQL injection attack by trying:
-
-curl "http://yourdomain.com/?id=' UNION SELECT"
-
-The WAF will block the request and log the attempt in waf_audit.log.
-
-View the Audit Summary
-To see a summary of requests inspected and approved, visit:
-
-arduino
-
-http://yourdomain.com/audit
-Download the Logs
-You can download the log file using the following endpoint:
-
-arduino
-
-http://yourdomain.com/audit/logs
-Export Audit as JSON
-To export the audit data as a JSON file, use:
-
-arduino
-
-http://yourdomain.com/audit/export
-Code Structure
-index.php: The main file containing the WAF logic. It inspects requests, blocks malicious ones, logs activity, and provides audit endpoints.
-waf_audit.log: The log file where all malicious and approved requests are stored.
-
-Configuration
-The WAF uses predefined regular expressions to detect different types of attacks. You can customize the detection rules by editing the $attack_patterns array in the index.php file:
-
-php
-
-$attack_patterns = [
-    'SQL_INJECTION' => '/(union.*select.*|select.*from.*|insert.*into.*|drop.*table.*)/i',
-    'XSS' => '/(<.*script.*>|javascript:.*)/i',
-    'CSRF' => '/(csrf_token|_csrf)/i',
-    'RFI_LFI' => '/(file:\/\/|php:\/\/|data:\/\/)/i',
-    'HTTP_RESPONSE_SPLIT' => '/(\%0d\%0a|\r\n)/i'
-];
-
-
-### Key Details:
-
-- **Installation & Deployment**: Provides step-by-step instructions on how to deploy the PHP WAF to a web server.
-- **Usage**: Describes how to test SQL injection attacks and view audit reports.
-- **Configuration**: Allows the user to easily modify attack patterns in the `$attack_patterns` array.
-- **Endpoints Summary**: A table summarizing the audit endpoints available for tracking activity.
-- **Logs**: Describes the structure of the log file and what information is captured.
-- **Security Considerations**: Includes advice on performance and log review for maintaining the WAF.
-
-This README is comprehensive and suitable for hosting the WAF project on GitHub or sharing it with clients. Let me know if you need further customization!
+WAF Management Tool – User Manual
+Overview
+The WAF Management Tool provides a user-friendly interface to protect your web application from security threats such as SQL injection, Cross-Site Scripting (XSS), and more. This manual will help you manage and configure the WAF rules, logs, and settings through the WAF GUI.
+Main Features:
+1.	Dashboard: View statistics of requests, blocked attacks, and the current WAF status.
+2.	Logs: Review logs of malicious and safe requests.
+3.	Rules Management: Add, edit, or delete WAF rules.
+4.	Settings: Enable/disable the WAF, configure rate limits, manage notifications, and other settings.
+5.	Audit: View reports and audits of activity.
+6.	Export Logs: Download logs for offline analysis.
+________________________________________
+Accessing the WAF Tool
+1.	Login:
+o	Navigate to the WAF login page (https://yourdomain.com/waf/login.php).
+o	Enter your admin credentials and click Login.
+2.	Logout:
+o	To log out, click the Logout button in the top right of the page.
+o	This will securely end your session.
+________________________________________
+Dashboard
+Once logged in, the dashboard provides an overview of the current status of the WAF and traffic on your site.
+Dashboard Features:
+•	Total Requests Inspected: The total number of requests processed by the WAF.
+•	Malicious Requests Blocked: Displays how many requests have been blocked due to security violations.
+•	Approved (Safe) Requests: Shows the number of legitimate, non-malicious requests.
+•	Current WAF Status: Indicates if the WAF is currently enabled or disabled. You can toggle the WAF status from here.
+•	Threat Level: Displays the current threat level (Normal, Medium, High Alert) based on malicious activity. The color-coded system helps to quickly identify threat severity:
+o	Green: Normal (Low threat)
+o	Orange: Medium (Moderate threat)
+o	Red: High Alert (High threat)
+To Toggle WAF Status:
+1.	Click the Toggle WAF button.
+2.	Confirm the action when prompted.
+3.	The WAF status will update immediately.
+________________________________________
+Logs
+The Logs section allows you to view details about incoming requests and which ones were blocked by the WAF.
+Steps to View Logs:
+1.	Go to the Logs section via the navigation menu.
+2.	View details like:
+o	IP Address: The origin of the request.
+o	Request Endpoint: The URL or endpoint that was accessed.
+o	Method: The HTTP method used (GET, POST, etc.).
+o	Payload: The data that was submitted with the request.
+o	Attack Type: Identified attack patterns (SQL injection, XSS, etc.).
+o	Blocked Status: Whether the request was blocked or allowed.
+Search Logs:
+•	Use the search bar to filter logs based on IP addresses, endpoint, or method.
+Clear Logs:
+•	If logs become too large, you can manually clear logs by navigating to the Clear Logs button at the bottom of the logs page.
+________________________________________
+Rules Management
+In the Rules section, you can manage the rules that determine what the WAF will block or allow.
+Steps to Add a New Rule:
+1.	Navigate to the Rules section via the navigation menu.
+2.	Click the Add New Rule button.
+3.	Fill out the form:
+o	Rule Name: A descriptive name for the rule (e.g., SQL Injection Protection).
+o	Pattern: The regular expression pattern used to detect the attack (e.g., /select|insert|drop/i).
+o	Action: Choose block to prevent the request or log to only log it.
+4.	Click Submit to save the new rule.
+Steps to Edit or Delete a Rule:
+•	Edit: Next to each rule, click the Edit button to update the pattern or action.
+•	Delete: Click the Delete button to remove the rule.
+To Update Rules from JSON:
+1.	In the Rules section, there is an option to upload a .json file (like waf-rules.json) to update rules in bulk.
+2.	Upload the updated rules file, and the WAF will automatically process and apply the changes.
+________________________________________
+Settings
+The Settings section allows you to configure the core behavior of the WAF.
+Key Settings:
+•	WAF Status: Enable or disable the WAF.
+•	Rate Limit: Set the number of requests allowed per minute from a single IP address. This helps protect against DoS (Denial of Service) attacks.
+•	Email Notifications: Enable email alerts for suspicious or malicious activity.
+•	Log Level: Choose between logging all activity (all), only malicious activity (malicious), or disabling logging (none).
+Steps to Update WAF Settings:
+1.	Go to the Settings section.
+2.	Update the necessary settings (WAF status, rate limit, email, etc.).
+3.	Click Update Settings to save the changes.
+Admin Email Configuration:
+•	Enter the Admin Email where alerts will be sent when attacks are detected.
+•	Ensure that the email is up-to-date for critical notifications.
+________________________________________
+Audit
+The Audit section allows you to view security audit reports generated by the WAF.
+To View an Audit Report:
+1.	Navigate to Audit in the menu.
+2.	The audit report will display data such as:
+o	Requests Inspected
+o	Malicious Requests
+o	Approved Requests
+3.	You can filter audit results by date or event type.
+________________________________________
+Export Logs
+The Export Logs feature allows you to download the WAF logs for offline analysis.
+Steps to Export Logs:
+1.	Navigate to Export Logs in the menu.
+2.	Choose the file format you want to export (e.g., JSON or CSV).
+3.	Click the Export button, and the logs will be downloaded to your device.
+________________________________________
+General Tips:
+•	Review Logs Regularly: Regularly review WAF logs for patterns in malicious activity and adjust your rules accordingly.
+•	Update Rules: Keep your WAF rules up to date by reviewing the latest threats and updating the waf-rules.json file.
+•	Monitor Rate Limits: Set reasonable rate limits to protect against automated attacks while ensuring legitimate users are not blocked.
 
