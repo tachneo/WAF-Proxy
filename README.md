@@ -167,7 +167,7 @@ The **Export Logs** feature allows you to download the WAF logs for offline anal
 
 For any inquiries or support, feel free to reach out through the following channels:
 
-- 📧 [info@tach.in](mailto:info@tach.in)
+- 📧 [info@tachy.in](mailto:info@tachy.in)
 - 🔗 [LinkedIn Profile](https://www.linkedin.com/in/tachy/)
 
 ---
